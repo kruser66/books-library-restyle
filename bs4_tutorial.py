@@ -17,9 +17,8 @@ if __name__ == '__main__':
         class_='attachment-post-image size-post-image wp-post-image'
     )
     text_block = soup.find('div', class_='entry-content')
-    text = text_block.get_text()
 
     print(title_tag.text)
     print(image_tag['src'])
     print()
-    print(text)
+    print(text_block.text)

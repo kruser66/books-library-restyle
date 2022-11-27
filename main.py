@@ -1,5 +1,6 @@
 import os
 import requests
+from bs4 import BeautifulSoup
 
 
 def check_for_redirect(response):
@@ -31,5 +32,28 @@ def main():
             print(f'Book with id {book_id} - not exist')
 
 
+def parse_page_book(book_id):
+    url = f'https://tululu.org/b{str(book_id)}/'
+
+    response = requests.get(url)
+    response.raise_for_status()
+
+    check_for_redirect(response)
+
+    soup = BeautifulSoup(response.text, 'lxml')
+
+    title_tag = soup.find('h1')
+
+    title, author = title_tag.text.split('::')
+
+    print(f'Заголовок: {title.strip()}')
+    print(f'Автор: {author.strip()}')
+
+    # print(image_tag['src'])
+    # print()
+    # print(text_block.text)
+
+
 if __name__ == '__main__':
-    main()
+    # main()
+    parse_page_book(1)
