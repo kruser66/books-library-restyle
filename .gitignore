@@ -5,6 +5,7 @@ __pycache__/
 media/
 books/
 text/
+image/
 
 
 ## Django stuff:
