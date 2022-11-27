@@ -1,6 +1,7 @@
 import os
 import requests
 from bs4 import BeautifulSoup
+from pathvalidate import sanitize_filename
 
 
 def check_for_redirect(response):
@@ -19,6 +20,29 @@ def download_book(books_dir, book_id):
     path_to_save = os.path.join(books_dir, f'id{book_id}.txt')
     with open(path_to_save, 'wb') as file:
         file.write(response.content)
+
+
+def download_txt(url, filename, folder='books/'):
+    """Функция для скачивания текстовых файлов.
+    Args:
+        url (str): Cсылка на текст, который хочется скачать.
+        filename (str): Имя файла, с которым сохранять.
+        folder (str): Папка, куда сохранять.
+    Returns:
+        str: Путь до файла, куда сохранён текст.
+    """
+    os.makedirs(folder, exist_ok=True)
+    response = requests.get(url)
+    response.raise_for_status()
+
+    # check_for_redirect(response)
+
+    path_to_save = os.path.join(folder, sanitize_filename(filename) + '.txt')
+
+    with open(path_to_save, 'wb') as file:
+        file.write(response.content)
+
+    return path_to_save
 
 
 def main():
@@ -56,4 +80,14 @@ def parse_page_book(book_id):
 
 if __name__ == '__main__':
     # main()
-    parse_page_book(1)
+    # parse_page_book(1)
+    url = 'http://tululu.org/txt.php?id=1'
+
+    filepath = download_txt(url, 'Алиби')
+    print(filepath)  # Выведется books/Алиби.txt
+
+    filepath = download_txt(url, 'Али/би', folder='books/')
+    print(filepath)  # Выведется books/Алиби.txt
+
+    filepath = download_txt(url, 'Али\\би', folder='txt/')
+    print(filepath)  # Выведется txt/Алиби.txt

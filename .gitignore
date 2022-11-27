@@ -4,6 +4,8 @@ __pycache__/
 *$py.class
 media/
 books/
+text/
+
 
 ## Django stuff:
 *.log
