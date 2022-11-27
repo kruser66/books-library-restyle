@@ -34,7 +34,7 @@ def download_txt(url, filename, folder='books/'):
     return path_to_save
 
 
-def download_image(url, filename, folder='image/'):
+def download_cover(url, filename, folder='image/'):
     """Функция для скачивания изображений книг.
     Args:
         url (str): Cсылка на картинку, которую хочется скачать.
@@ -75,13 +75,21 @@ def parse_page_book(book_id):
     image_tag = soup.find('div', class_='bookimage').find('img')['src']
     image_url = urljoin(site, image_tag)
 
-    Book = namedtuple('Book', 'title author txt_url filename image_url')
+    tag_divs = soup.find_all('div', class_='texts')
+    comments = '\n'.join([tag.find('span').text for tag in tag_divs])
+
+    Book = namedtuple(
+        'Book',
+        'title author txt_url filename image_url comments'
+    )
+
     book = Book(
         title.strip(),
         author.strip(),
         urljoin(site, f'/txt.php?id={book_id}'),
         f'{book_id}. {title.strip()}',
-        image_url
+        image_url,
+        comments
     )
 
     return book
@@ -92,12 +100,15 @@ def main():
     for book_id in range(1, 11):
         try:
             book = parse_page_book(book_id)
-            print(book.filename)
-            print(book.image_url)
-            filename = unquote(urlparse(book.image_url).path.split('/')[-1])
-            print()
-            download_image(book.image_url, filename)
+            print(book.filename, '\n')
+            print(book.comments)
+            # print(book.image_url)
+            # print()
+
+            # filename = unquote(urlparse(book.image_url).path.split('/')[-1])
+
             # download_txt(book.url, book.filename)
+            # download_cover(book.image_url, filename)
         except requests.HTTPError:
             print(f'Book with id {book_id} - not exist\n')
 
