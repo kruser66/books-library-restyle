@@ -75,12 +75,15 @@ def parse_page_book(book_id):
     image_tag = soup.find('div', class_='bookimage').find('img')['src']
     image_url = urljoin(site, image_tag)
 
-    tag_divs = soup.find_all('div', class_='texts')
-    comments = '\n'.join([tag.find('span').text for tag in tag_divs])
+    tag_comments = soup.find_all('div', class_='texts')
+    comments = '\n'.join([tag.find('span').text for tag in tag_comments])
+
+    tag_genre = soup.find('span', class_='d_book').find_all('a')
+    genres = [tag.text for tag in tag_genre]
 
     Book = namedtuple(
         'Book',
-        'title author txt_url filename image_url comments'
+        'title author txt_url filename image_url comments genre'
     )
 
     book = Book(
@@ -89,7 +92,8 @@ def parse_page_book(book_id):
         urljoin(site, f'/txt.php?id={book_id}'),
         f'{book_id}. {title.strip()}',
         image_url,
-        comments
+        comments,
+        genres
     )
 
     return book
@@ -100,8 +104,10 @@ def main():
     for book_id in range(1, 11):
         try:
             book = parse_page_book(book_id)
-            print(book.filename, '\n')
-            print(book.comments)
+            print(f'Заголовок: {book.title}')
+            print(f'{book.genre}')
+            print()
+            # print(book.comments)
             # print(book.image_url)
             # print()
 
