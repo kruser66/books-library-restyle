@@ -6,9 +6,23 @@ from collections import namedtuple
 from urllib.parse import urljoin, urlparse, unquote
 
 
+site = 'https://tululu.org'
+
+
 def check_for_redirect(response):
     if response.history:
         raise requests.HTTPError
+
+
+def fetch_book_page(book_id):
+
+    url = urljoin(site, f'b{str(book_id)}/')
+
+    response = requests.get(url)
+    response.raise_for_status()
+    check_for_redirect(response)
+
+    return response
 
 
 def download_txt(url, filename, folder='books/'):
@@ -57,23 +71,15 @@ def download_cover(url, filename, folder='image/'):
     return path_to_save
 
 
-def parse_page_book(book_id):
-
-    site = 'https://tululu.org'
-
-    url = urljoin(site, f'b{str(book_id)}/')
-
-    response = requests.get(url)
-    response.raise_for_status()
-    check_for_redirect(response)
+def parse_book_page(response):
 
     soup = BeautifulSoup(response.text, 'lxml')
 
     title_tag = soup.find('h1')
     title, author = title_tag.text.split('::')
 
-    image_tag = soup.find('div', class_='bookimage').find('img')['src']
-    image_url = urljoin(site, image_tag)
+    image_tag = soup.find('div', class_='bookimage').find('img')
+    image_url = urljoin(site, image_tag['src'])
 
     tag_comments = soup.find_all('div', class_='texts')
     comments = '\n'.join([tag.find('span').text for tag in tag_comments])
@@ -83,14 +89,12 @@ def parse_page_book(book_id):
 
     Book = namedtuple(
         'Book',
-        'title author txt_url filename image_url comments genre'
+        'title author image_url comments genre'
     )
 
     book = Book(
         title.strip(),
         author.strip(),
-        urljoin(site, f'/txt.php?id={book_id}'),
-        f'{book_id}. {title.strip()}',
         image_url,
         comments,
         genres
@@ -103,18 +107,15 @@ def main():
 
     for book_id in range(1, 11):
         try:
-            book = parse_page_book(book_id)
-            print(f'Заголовок: {book.title}')
-            print(f'{book.genre}')
-            print()
-            # print(book.comments)
-            # print(book.image_url)
-            # print()
+            response = fetch_book_page(book_id)
+            book = parse_book_page(response)
 
-            # filename = unquote(urlparse(book.image_url).path.split('/')[-1])
+            cover_name = unquote(urlparse(book.image_url).path.split('/')[-1])
+            txt_url = unquote(urljoin(site, f'/txt.php?id={book_id}'))
+            txt_name = f'{book_id}. {book.title}'
 
-            # download_txt(book.url, book.filename)
-            # download_cover(book.image_url, filename)
+            print(download_txt(txt_url, txt_name))
+            print(download_cover(book.image_url, cover_name))
         except requests.HTTPError:
             print(f'Book with id {book_id} - not exist\n')
 
