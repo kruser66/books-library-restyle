@@ -138,7 +138,7 @@ def main():
         parser.print_help()
     args = parser.parse_args()
 
-    for book_id in range(args.start_id, args.end_id):
+    for book_id in range(args.start_id, args.end_id + 1):
         try:
             response = fetch_book_page(book_id)
             book = parse_book_page(response)

@@ -2,10 +2,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
-media/
 books/
-text/
-image/
+images/
 
 
 ## Django stuff:
