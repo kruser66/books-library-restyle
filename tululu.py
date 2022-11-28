@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import requests
 import argparse
@@ -8,11 +9,12 @@ from collections import namedtuple
 from urllib.parse import urljoin, urlparse, unquote
 
 
-site = 'https://tululu.org'
+site = 'https://tululu.org/'
 
 
 def check_for_redirect(response):
-    if response.history:
+
+    if response.url == site or response.history:
         raise requests.HTTPError
 
 
@@ -50,7 +52,7 @@ def download_txt(url, filename, folder='books/'):
     return path_to_save
 
 
-def download_cover(url, filename, folder='image/'):
+def download_cover(url, filename, folder='images/'):
     """Функция для скачивания изображений книг.
     Args:
         url (str): Cсылка на картинку, которую хочется скачать.
@@ -80,6 +82,10 @@ def parse_book_page(response):
     title_tag = soup.find('h1')
     title, author = title_tag.text.split('::')
 
+    txt_tag = soup.find(href=re.compile("/txt."))
+    txt_href = txt_tag['href'] if txt_tag else ''
+    txt_url = urljoin(site, txt_href)
+
     image_tag = soup.find('div', class_='bookimage').find('img')
     image_url = urljoin(site, image_tag['src'])
 
@@ -91,12 +97,13 @@ def parse_book_page(response):
 
     Book = namedtuple(
         'Book',
-        'title author image_url comments genre'
+        'title author txt_url image_url comments genre'
     )
 
     book = Book(
         title.strip(),
         author.strip(),
+        txt_url,
         image_url,
         comments,
         genres
@@ -137,14 +144,15 @@ def main():
             book = parse_book_page(response)
 
             cover_name = unquote(urlparse(book.image_url).path.split('/')[-1])
-            txt_url = unquote(urljoin(site, f'/txt.php?id={book_id}'))
             txt_name = f'{book_id}. {book.title}'
 
-            print(download_txt(txt_url, txt_name))
+            print(download_txt(book.txt_url, txt_name))
             print(download_cover(book.image_url, cover_name))
             print()
         except requests.HTTPError:
-            print(f'Book with id {book_id} - not exist\n')
+            print(
+                f'Книга с номером id: {book_id} не доступна для скачивания.\n'
+            )
 
 
 if __name__ == '__main__':
