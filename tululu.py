@@ -1,5 +1,7 @@
 import os
+import sys
 import requests
+import argparse
 from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
 from collections import namedtuple
@@ -103,9 +105,33 @@ def parse_book_page(response):
     return book
 
 
+def create_parser():
+    parser = argparse.ArgumentParser(
+        description='Парсинг книг с сайта tululu.org '
+    )
+
+    parser.add_argument(
+        'start_id',
+        help='Начальный индекс (int) для парсинга',
+        type=int
+    )
+    parser.add_argument(
+        'end_id',
+        help='Конечный индекс (int) конечный индекс',
+        type=int
+    )
+
+    return parser
+
+
 def main():
 
-    for book_id in range(1, 11):
+    parser = create_parser()
+    if len(sys.argv) < 3:
+        parser.print_help()
+    args = parser.parse_args()
+
+    for book_id in range(args.start_id, args.end_id):
         try:
             response = fetch_book_page(book_id)
             book = parse_book_page(response)
@@ -116,6 +142,7 @@ def main():
 
             print(download_txt(txt_url, txt_name))
             print(download_cover(book.image_url, cover_name))
+            print()
         except requests.HTTPError:
             print(f'Book with id {book_id} - not exist\n')
 
